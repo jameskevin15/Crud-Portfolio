@@ -1,4 +1,4 @@
-"use server";
+// app/api/createflow/route.ts  (example path)
 
 import { openDb } from "@/mongodb/lib/db";
 import { NextResponse } from "next/server";
@@ -11,24 +11,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, title, type, ...rest } = body;
 
-    // Basic validation for required fields
+    // Basic validation
     if (!name || !title || !type) {
-      return new Response(
-        JSON.stringify({ message: "Name, title, and type are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { message: "Name, title, and type are required" },
+        { status: 400 }
       );
     }
 
-    const db = openDb(DB_NAME, COLLECTION);
+    const db = await openDb(DB_NAME, COLLECTION);
+
     const id = name.toLowerCase().replace(/\s+/g, "_");
-    
+
     const document = {
       _id: id,
       title,
       type,
-      ...rest, // Spread any additional fields
-      nodes: rest.nodes || [],
-      edges: rest.edges || [],
+      ...rest,
+      nodes: rest.nodes ?? [],
+      edges: rest.edges ?? [],
       createdAt: new Date(),
     };
 
@@ -37,11 +38,13 @@ export async function POST(request: Request) {
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("DB error:", error);
-    return new Response(
-      JSON.stringify({ 
-        message: error instanceof Error ? error.message : "Server error" 
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      },
+      { status: 500 }
     );
   }
 }

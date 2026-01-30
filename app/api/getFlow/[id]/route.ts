@@ -1,13 +1,15 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { openDb } from "@/mongodb/lib/db";
 
 const DB_NAME = "etracs_mgmt_base_oscp";
 const COLLECTION = "wf_design";
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
 
   try {
     if (!id) {
@@ -17,10 +19,10 @@ export async function GET(
       );
     }
 
-    const db = openDb(DB_NAME, COLLECTION);
-    const data = await db.find({ _id: id }); 
+    const db = await openDb(DB_NAME, COLLECTION);
+    const data = await db.find({ _id: id });
 
-    if (!data) {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
       return NextResponse.json(
         { code: "02", error: "Workflow not found" },
         { status: 404 }
