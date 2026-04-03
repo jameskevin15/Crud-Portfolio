@@ -1,13 +1,12 @@
 "use server";
 
 import { openDb } from "@/mongodb/lib/db";
-import { NextResponse } from "next/server";
 
-export async function getAllData() {
+export async function getAllData({ filter = {}, options = {} }: { filter?: Record<string, any>, options?: Record<string, any> }) {
   try {
     const db = openDb("crud", "portfolio");
-    const data = await db.getList({});
-    return data; // Return the data directly, not wrapped in NextResponse
+    const data = await db.getList(filter, options);
+    return data; 
   } catch (error) {
     console.error("Error fetching data:", error);
     throw new Error("Failed to fetch data");

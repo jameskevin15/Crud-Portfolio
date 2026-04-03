@@ -201,7 +201,7 @@ const find = async (filter: any, options: Record<string, any> = {}) => {
   }
 };
 
-const getList = async (filter: any, options: Record<string, any> = {}) => {
+const getList = async (filter: Record<string, any>, options: Record<string, any> = {}) => {
   try {
     return await collection.find(filter, options).toArray();
   } catch (err) {

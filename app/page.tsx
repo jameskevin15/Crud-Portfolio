@@ -1,30 +1,49 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getAllData } from "@/_actions/crudActions";
 import Form from "@/components/Form";
 import FormDataViewer from "@/components/FormDataViewer";
 
 export default function Home() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Record<string, any>[]>([]);
+  const [search, setSearch] = useState("");
 
-  // Fetch data when component mounts
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const createSearchFilter = (query: string) => {
+    if (!query) return {};
+    
+    return {
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } }
+      ]
+    };
+  };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (searchQuery = "") => {
     try {
-      const result = await getAllData();
+      const result = await getAllData({
+        filter: createSearchFilter(searchQuery),
+        options: {},
+      });
       setData(Array.isArray(result) ? result : []);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-  };
+  }, []);
+  // Fetch data when component mounts or search changes
+  useEffect(() => {
+    fetchData(search);
+  }, [search, fetchData]);
 
   // This will be called after successful form submission
   const handleSubmitSuccess = () => {
-    fetchData(); // Refresh the data
+    fetchData(search); // Refresh the data with current search
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearch(query);
   };
 
   return (
@@ -33,7 +52,11 @@ export default function Home() {
       <Form onSubmitSuccess={handleSubmitSuccess} />
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Your Entries</h2>
-        <FormDataViewer initialData={data} />
+        <FormDataViewer 
+          initialData={data} 
+          search={search} 
+          onSearchChange={handleSearchChange} 
+        />
       </div>
     </div>
   );
